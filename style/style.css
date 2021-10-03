@@ -1,6 +1,7 @@
 body{
     margin: 0;
     background-color: rgba(160,160,160,0.8);
+
 }
 main{
     position: absolute;
@@ -85,7 +86,7 @@ div{
     border-radius: 1em;
 }
 small{
-    font-size: .5em;
+    font-size: .45em;
 }
 h1{
     font-size: 2em;
@@ -98,6 +99,9 @@ section{
     top:100%;
     margin: 1em;
 }
+article{
+    position: relative;
+}
 article>p{
     text-align: justify;
 }
@@ -106,21 +110,40 @@ article>p{
     display: inline-block;
     width: 70%;
 }
-#sobreMi>figure{
+#yo{
+    background-image: url("../img/yo.jpeg");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    border: none;
     position: absolute;
-    display: inline-block;
-    left: 70%;
-    width: 25%;
+    top: 0;
+    left: 75%;
+    height: 100%;
+    max-width: 25%;
 }
-#logros{
-    position: absolute;
-    top: 100%;
+#iaw{
+    background-image: url("../img/iaw.png");
 }
-#fortalezas{
-    position: absolute;
-    top: 200%;
+#asgbd{
+    background-image: url("../img/asgbd.jpg");
 }
-#objetivos{
-    position: absolute;
-    top: 300%;
+
+@media (max-width: 600px){
+    nav{
+        display: none;
+    }
+    div{
+        width: 96%;
+        height: 200px;
+        left: calc(50% - 188px);
+        top: 15%;
+    }
+    #yo{
+        display: none;
+    }
+    #sobreMi>p{
+        width: 100%;
+        display: block;
+    }
 }
