@@ -3,7 +3,7 @@ body{
     background-color: rgba(160,160,160,0.8);
 
 }
-main{
+#portada{
     position: absolute;
     top: 0;
     width: 100%;
@@ -38,7 +38,7 @@ nav>ul>li>ul{
     display: none;
 }
 nav>ul>li:hover{
-    background-color: rgba(72,72,72);
+    background-color: rgb(72,72,72);
 }
 nav>ul>li:hover>ul{
     display: block;
@@ -129,15 +129,16 @@ article>p{
     background-image: url("../img/asgbd.jpg");
 }
 
-@media (max-width: 600px){
+@media (max-width: 700px){
     nav{
         display: none;
     }
     div{
-        width: 96%;
+        width: 98.5%;
         height: 200px;
-        left: calc(50% - 188px);
+        left: 0;
         top: 15%;
+        border: .2em white solid;
     }
     #yo{
         display: none;
@@ -146,4 +147,9 @@ article>p{
         width: 100%;
         display: block;
     }
+}
+main{
+    position: absolute;
+    top: 10%;
+    left: 2em;
 }
