@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="/style/style.css">
+    <title>Proyecto MR</title>
+</head>
+<body>
+<nav>
+    <ul>
+        <li><a href="/index.html">PORTADA</a></li>
+        <li><a href="/asgbd/asgbd.html">ASGBD</a>
+            <ul>
+                <li><a href="/asgbd/proyectos/proyectosdb.html">Proyectos</a>
+                    <ul id="subASGBD">
+                        <li><a href="/asgbd/proyectos/proyectomr.html">Proyecto MR</a></li>
+                        <li>Probando submenús</li>
+                    </ul>
+                </li>
+                <li><a href="/asgbd/practicas/practicasdb.html">Prácticas</a></li>
+            </ul>
+        </li>
+        <li><a href="/iaw/iaw.html">IAW</a>
+            <ul>
+                <li><a href="/iaw/proyectos/proyectosiaw.html">Proyectos</a>
+                    <ul id="subIAW">
+                        <li><a href="/iaw/proyectos/proyectoHtmlCss.html">Proyecto HTML-CSS</a></li>
+                        <li>Probando submenús</li>
+                    </ul>
+                </li>
+                <li><a href="/iaw/practicas/practicasiaw.html">Prácticas</a></li>
+            </ul>
+        </li>
+    </ul>
+</nav>
+<main>
+    <h1>PROYECTO MODELO RELACIONAL</h1>
+    <h2>Introducción</h2>
+    <p>El proyecto consiste en diseñar e implementar una base de datos, sobre la parrilla
+    televisiva de RTVE, en Oracle y que esté bien diseñada y pensada. La base de datos se implementará
+    con la programación de los canales La 1 y 24 Horas desde las 6:00 del día 4 de Octubre hasta las 6:00
+    del día 6 de Octubre.</p>
+    <h2>Diseño de la base de datos</h2>
+    <p>Tras un exhaustivo análisis de la programación se ha diseñado el siguiente esquema de tablas:</p>
+    <a href="/img/diseño.jpg"><img src="/img/diseño.jpg" alt="Diseño MR" id="diseno" height="377px" width="413.5"></a>
+    <code id="tablas">----------------------------------------CREACIÓN DE TABLAS
+
+        CREATE TABLE canales (
+        id_canal NUMBER(1)  CONSTRAINT canales_pk PRIMARY KEY ,
+        nombre VARCHAR2(25) CONSTRAINT canales_uk1 UNIQUE
+        CONSTRAINT canales_nn1 NOT NULL
+        );
+
+        CREATE TABLE programas (
+        id_prog NUMBER(4)   CONSTRAINT programas_pk PRIMARY KEY ,
+        titulo VARCHAR2(50) CONSTRAINT programas_nn1 NOT NULL
+        CONSTRAINT programas_uk1 UNIQUE ,
+        publico CHAR(2),
+        tipo CHAR(1)        CONSTRAINT programas_ck1 CHECK (REGEXP_LIKE(tipo,'[S,N,P]'))
+        CONSTRAINT programas_nn2 NOT NULL ,
+        descripcion VARCHAR2(1000)
+        );
+
+        CREATE TABLE temporadas (
+        n_temporada NUMBER(4) ,
+        nombre VARCHAR2(25),
+        id_prog NUMBER(4) CONSTRAINT temporadas_fk1 REFERENCES programas(id_prog),
+        CONSTRAINT temporadas_pk PRIMARY KEY (id_prog,n_temporada)
+        );
+
+        CREATE TABLE capitulos (
+        n_capitulo NUMBER(4) ,
+        n_temporada NUMBER(4),
+        id_prog NUMBER(4),
+        titulo VARCHAR2(50),
+        descripcion VARCHAR2(1000),
+        CONSTRAINT capitulos_pk PRIMARY KEY (id_prog, n_temporada,n_capitulo),
+        CONSTRAINT capitulos_fk1 FOREIGN KEY (id_prog,n_temporada)
+        REFERENCES temporadas(id_prog,n_temporada)
+        ON DELETE CASCADE
+        );
+
+        CREATE TABLE emisiones (
+        id_emision NUMBER(5) CONSTRAINT emisiones_pk PRIMARY KEY ,
+        id_canal NUMBER(1)   CONSTRAINT emisiones_fk1 REFERENCES canales(id_canal)
+        ON DELETE CASCADE ,
+        id_prog NUMBER(4),
+        n_temporada NUMBER(4),
+        n_capitulo NUMBER(4),
+        fecha TIMESTAMP CONSTRAINT emisiones_nn1 NOT NULL ,
+        duracion INTERVAL DAY TO SECOND CONSTRAINT capitulos_nn2 NOT NULL ,
+        CONSTRAINT emisiones_fk2 FOREIGN KEY (id_prog,n_temporada,n_capitulo)
+        REFERENCES capitulos(id_prog,n_temporada,n_capitulo)
+        ON DELETE CASCADE
+        );</code>
+    <h2>Implementación de datos</h2>
+    <p>A todos los programas que carecen de temporadas se les ha establecido el "0" en n_temporada,
+    ya que este dato forma parte de la clave primaria de la tablas "Temporadas" y "Capítulos" puesto que
+    la mayoría de los programas se organizan en capítulos, pero no todos en temporadas. La decisión se ha tomado
+    debido a que el diseño sería más correcto en caso de tener que introducir toda la programación de todos los canales.</p>
+    <code>
+        ----------------------------------------Implementación de datos
+
+        -----Tabla de canales
+        INSERT INTO canales VALUES (1,'La 1');
+        INSERT INTO canales VALUES (2,'Teledeporte');
+        INSERT INTO canales VALUES (3,'24H');
+
+        -----Tabla de programas
+        INSERT INTO programas VALUES (1,'Cine Matrix Reloaded','12','P',null);
+        INSERT INTO programas VALUES (2,'Cine El club de los jovenes millonarios','16','P',null);
+        INSERT INTO programas VALUES (3, 'Noticias 24H','TP','N','Noticias de los servicios informativos del Canal 24 Horas. Producido por Televisión Española, este canal está dedicado íntegramente a ofrecer información de actualidad y es el más antiguo de los canales de este tipo en España.');
+        INSERT INTO programas VALUES (4,'Telediario Matinal','TP','N','Espacio de información diaria con noticias nacionales e internacionales.');
+        INSERT INTO programas VALUES (5,'La hora de la 1','7','P','"La hora de la 1" es un programa magacine, en el que se aborda la actualidad política y social.');
+        INSERT INTO programas VALUES (6,'Mejor contigo','7','P','Ion Aramendi conduce este espacio de diálogo y entrevistas con contenidos sociales y culturales de calidad. Las historias más sorprendentes y emocionantes, contadas por sus protagonistas, dibujarán cada mediodía una sonrisa a la audiencia.');
+        INSERT INTO programas VALUES (7,'Informativo territorial 1','TP','N',null);
+        INSERT INTO programas VALUES (8,'Telediario 1','TP','N','El informativo de las 15 horas en La 1 de Televisión Española, con Ana Blanco');
+        INSERT INTO programas VALUES (9,'Informativo territorial 2','TP','N',null);
+        INSERT INTO programas VALUES (10,'El Tiempo','TP','N','null');
+        INSERT INTO programas VALUES (11,'Dos Vidas','7','S','La historia se cuenta a través de dos protagonistas femeninas, Carmen (25) y Julia (36), que viven en dos continentes en dos épocas muy diferentes.');
+        INSERT INTO programas VALUES (12,'Servir y Proteger','7','S','Serie diaria que aborda el día a día de una comisaría de barrio en una ciudad española.');
+        INSERT INTO programas VALUES (13,'El Cazador','TP','P','El Cazador, un formato en el que cuatro concursantes anónimos unen sus conocimientos para ganar al cazador, un auténtico profesional de los concursos');
+        INSERT INTO programas VALUES (14,'España Directo','TP','P','Magacine de actualidad de las tardes de La1');
+        INSERT INTO programas VALUES (15,'Aquí la Tierra','TP','P','Magacine de naturaleza e información meteorológica');
+        INSERT INTO programas VALUES (16,'Telediario 2','TP','N','El informativo de las 21 horas en La 1 de Televisión Española, con Carlos Franganillo');
+        INSERT INTO programas VALUES (17,'Masterchef Celebrity','7','P','Un grupo de personajes de la vida pública tendrán que demostrar, mediantes sus recetas, que son el mejor masterchef celebrity de España');
+        INSERT INTO programas VALUES (18,'La noche en 24H','TP','N','Informativo diario en el que se repasa y analiza la actualidad del día.');
+        INSERT INTO programas VALUES (19,'Viaje al centro de la tele','TP','P','Una nueva incursión en el Archivo de RTVE a través de la mirada desenfadada del programa dirigido por Pedro Santos, comentado por Santiago Segura y con grafismos de Forges.');
+        INSERT INTO programas VALUES (20,'Ana Tramel. El juego','16','S','Ana Tramel es una brillante abogada penalista que vive sus horas más bajas. Una llamada de su hermano Alejandro, al que hace años que no ve, le hace ponerse de nuevo en marcha: ha sido acusado de asesinar al director del casino Gran Castilla. Rodeada de un pequeño equipo de confianza, se tendrá que enfrentar a una enorme corporación de la industria del juego.');
+        INSERT INTO programas VALUES (21,'Comando actualidad','7','P','Un novedoso formato que presenta un tema de actualidad a través de la mirada coral de varios reporteros callejeros. Cuatro periodistas que se desplazan hasta el lugar donde ocurren las noticias, las muestran tal y como son y aportan al tema su mirada personal.');
+        INSERT INTO programas VALUES (22,'Diario 24H','TP','N','Diario 24 es una mirada detallada a las noticias que marcan cada jornada, desde los puntos donde se generan y con sus imágenes, voces y sonidos en directo.');
+        INSERT INTO programas VALUES (23,'La tarde en 24H','TP','N','A partir de las 17.00 horas, ''La tarde'' seguirá fiel al concepto de información en profundidad con los mejores expertos, pero con un formato diferente, más homogéneo, apostando por una única marca, ''La tarde en 24H''. A las horas en punto y a media, la actualidad más urgente, además el análisis con expertos a través de 4 mesas de análisis diferentes cada tarde: la hora de la actualidad, la hora de la economía, la hora de los deportes y la hora de la cultura.');
+        INSERT INTO programas VALUES (24,'Objetivo Igualdad','7','P','En cada programa pondremos sobre la mesa las bases de la discriminación, proyectos inspiradores para superar la desigualdad y perfiles de pioneras y mujeres 100% feministas. OBJETIVO IGUALDAD quiere también ser plataforma para la campaña ‘HeForShe’ de ONU Mujeres que pone de manifiesto el compromiso de los hombres con la igualdad".');
+        INSERT INTO programas VALUES (25,'Emprende Express','TP','P','Emprende Express ayuda a los emprendedores que deciden montar su empresa con diferentes contenidos relacionados con la financiación, búsqueda de socios, habilidades personales y gestión del conocimiento.');
+        INSERT INTO programas VALUES (26,'Repor','TP','P','El programa REPOR, en antena desde 2007, aborda en sus reportajes contenidos sociales, de denuncia o retratos y situaciones de la vida cotidiana que preocupan e interesan a todos.');
+        INSERT INTO programas VALUES (27,'TD Internacional 24H','TP','N','Programa en el que prima la información de ámbito internacional y especialmente la que se produce o tiene relación con Iberoamérica.');
+        INSERT INTO programas VALUES (28,'Canal 24H en Directo','TP','N','null');
+        INSERT INTO programas VALUES (29,'Emprende','TP','P','Emprende aporta soluciones que ayuden a emprender, ideas que permitan iniciar nuevos proyectos e información útil sobre todo el recorrido que tiene que hacer un emprendedor, con sus fortalezas y debilidades.');
+        INSERT INTO programas VALUES (30,'Conversatorios en casa de Ámerica','TP','P','Este programa recupera el término conversación como lugar de encuentro propicio para la conversación tranquila. Con una mirada limpia, curiosa y sin prejuicios, este nuevo programa ahondará en la riqueza, diversidad y cultura de las sociedades latinoamericanas.');
+        INSERT INTO programas VALUES (31,'Automovilismo Acont Fed Española 2021 Resúmenes','TP','N',null);
+        INSERT INTO programas VALUES (32,'Surf Acont Federación Española 2021','TP','P',null);
+        INSERT INTO programas VALUES (33,'Canal 24h en directo','TP','N',null);
+
+
+        -----Tabla de temporadas
+
+        INSERT INTO temporadas VALUES (0,null,4);
+        INSERT INTO temporadas VALUES (0,null,5);
+        INSERT INTO temporadas VALUES (0,null,6);
+        INSERT INTO temporadas VALUES (0,null,7);
+        INSERT INTO temporadas VALUES (2021,'2021',8);
+        INSERT INTO temporadas VALUES (0,null,9);
+        INSERT INTO temporadas VALUES (0,null,10);
+        INSERT INTO temporadas VALUES (1,null,11);
+        INSERT INTO temporadas VALUES (1,null,12);
+        INSERT INTO temporadas VALUES (0,null,13);
+        INSERT INTO temporadas VALUES (0,null,14);
+        INSERT INTO temporadas VALUES (0,null,15);
+        INSERT INTO temporadas VALUES (2021,'2021',16);
+        INSERT INTO temporadas VALUES (6,null,17);
+        INSERT INTO temporadas VALUES (0,null,18);
+        INSERT INTO temporadas VALUES (2021,'2021',3);
+        INSERT INTO temporadas VALUES (0,null,19);
+        INSERT INTO temporadas VALUES (1,null,20);
+        INSERT INTO temporadas VALUES (0,null,21);
+        INSERT INTO temporadas VALUES (0,null,22);
+        INSERT INTO temporadas VALUES (0,null,23);
+        INSERT INTO temporadas VALUES (0,null,24);
+        INSERT INTO temporadas VALUES (0,null,25);
+        INSERT INTO temporadas VALUES (0,null,26);
+        INSERT INTO temporadas VALUES (0,null,27);
+        INSERT INTO temporadas VALUES (0,null,29);
+        INSERT INTO temporadas VALUES (0,null,30);
+        INSERT INTO temporadas VALUES (0,null,33);
+
+
+        -----Tabla de capítulos
+
+        INSERT INTO capitulos VALUES (159,0,4,null,null);
+        INSERT INTO capitulos VALUES (160,0,4,null,null);
+        INSERT INTO capitulos VALUES (366,0,5,'La hora política',null);
+        INSERT INTO capitulos VALUES (428,0,5,'La hora de la actualidad',null);
+        INSERT INTO capitulos VALUES (367,0,5,'La hora política',null);
+        INSERT INTO capitulos VALUES (429,0,5,'La hora de la actualidad',null);
+        INSERT INTO capitulos VALUES (16,0,6,'Programa 16',null);
+        INSERT INTO capitulos VALUES (17,0,6,'Programa 17',null);
+        INSERT INTO capitulos VALUES (0,0,7,null,null);
+        INSERT INTO capitulos VALUES (277,2021,8,null,null);
+        INSERT INTO capitulos VALUES (278,2021,8,null,null);
+        INSERT INTO capitulos VALUES (0,0,9,null,null);
+        INSERT INTO capitulos VALUES (643,0,10,null,null);
+        INSERT INTO capitulos VALUES (644,0,10,null,null);
+        INSERT INTO capitulos VALUES (169,1,11,'Episodio 169','Julia cada vez parece más cómoda con Leo. Tan cómoda que cualquiera diría que empieza a sentir algo por él. Cualquiera menos Julia, que lo niega.');
+        INSERT INTO capitulos VALUES (170,1,11,'Episodio 170','Julia y Diana se distancian más aún si cabe. En África, Carmen consigue su padre y Patricia acepten que Víctor vuelva a trabajar en la fábrica.');
+        INSERT INTO capitulos VALUES (261,1,12,'Capítulo 261','Tras conocer a Sebastián, Paty insiste a Tina para que denuncie lo ocurrido. Ibarra pide a Alicia que vuelva a investigar a Iker y la joven inspectora...');
+        INSERT INTO capitulos VALUES (262,1,12,'Capitulo 262','Alicia pilla a Iker en la empresa de Somoza. Jairo y Julio unen fuerzas para apoyar a Quintero en su guerra. Sebastián vuelve a acosar a Tina...');
+        INSERT INTO capitulos VALUES (380,0,13,null,null);
+        INSERT INTO capitulos VALUES (359,0,13,null,null);
+        INSERT INTO capitulos VALUES (2,0,14,null,null);
+        INSERT INTO capitulos VALUES (3,0,14,null,null);
+        INSERT INTO capitulos VALUES (234,0,15,null,null);
+        INSERT INTO capitulos VALUES (235,0,15,null,null);
+        INSERT INTO capitulos VALUES (277,2021,16,null,null);
+        INSERT INTO capitulos VALUES (278,2021,16,null,null);
+        INSERT INTO capitulos VALUES (4,6,17,'Programa 4','Los aspirantes tienen que preparar un salmón noruego por parejas, cocinar para 80 comensales en A Coruña y preparar un postre en la eliminación.');
+        INSERT INTO capitulos VALUES (727,0,18,null,null);
+        INSERT INTO capitulos VALUES (728,0,18,null,null);
+        INSERT INTO capitulos VALUES (277,2021,3,null,null);
+        INSERT INTO capitulos VALUES (278,2021,3,null,null);
+        INSERT INTO capitulos VALUES (96,0,19,'Sintonías animadas, grandes éxitos','Un nostálgico, pero divertido viaje por las sintonías y canciones de TVE a lo largo de su historia');
+        INSERT INTO capitulos VALUES (4,1,20,null,'Con la ayuda de Ramiro, Martín es localizado sano y salvo; Ana descubre una información muy valiosa, pero Moncada le avisa de una doble traición');
+        INSERT INTO capitulos VALUES (146,0,21,'Ganas de celebrar','Después de año y medio de severas restricciones y con casi el 80% de la población vacunada, nos vamos juntando de nuevo en fiestas, comidas y...');
+        INSERT INTO capitulos VALUES (107,0,21,'Vivienda Pos-Covid','Comando Actualidad analiza el nuevo mercado inmobiliario después de la pandemia');
+        INSERT INTO capitulos VALUES (69,0,21,'Casas con futuro','Los reporteros de Comando Actualidad analizan cómo son y con qué se construyen las casas nuevas pensadas para abaratar gastos y cuidar el planeta');
+        INSERT INTO capitulos VALUES (791,0,22,null,null);
+        INSERT INTO capitulos VALUES (792,0,22,null,null);
+        INSERT INTO capitulos VALUES (459,0,23,null,null);
+        INSERT INTO capitulos VALUES (460,0,23,null,null);
+        INSERT INTO capitulos VALUES (25,0,24,'90 años del voto femenino','En 1931 se aprobó el voto femenino en España. Clara Campoamor consiguió que prevaleciera el derecho de las mujeres. ¿Qué sabes de Clara Campoamor?');
+        INSERT INTO capitulos VALUES (142,0,25,null,null);
+        INSERT INTO capitulos VALUES (322,0,26,'Duelo de anzuelos','Pescadores recreativos y pescadores artesanales de la bahía de Cádiz enfrentados por la creación de una reserva marina de interés pesquero');
+        INSERT INTO capitulos VALUES (643,0,27,null,null);
+        INSERT INTO capitulos VALUES (644,0,27,null,null);
+        INSERT INTO capitulos VALUES (142,0,29,null,null);
+        INSERT INTO capitulos VALUES (343,0,30,null,'Programa de entrevistas a personajes de reconocido prestigio que pretende profundizar en la riqueza y diversidad de las sociedades latinoamericanas.');
+        INSERT INTO capitulos VALUES (0,0,33,null,null);
+
+
+        -----Tabla de emisiones
+        -----------Canal La 1
+        INSERT INTO emisiones VALUES (1,1,4,0,159,to_timestamp('04/10/2021 06:00','dd/mm/yyyy hh24:mi'),interval '150' minute );
+
+        INSERT INTO emisiones VALUES (2,1,5,0,366,to_timestamp('04/10/2021 08:30','dd/mm/yyyy hh24:mi'),interval '90' minute );
+        INSERT INTO emisiones VALUES (3,1,5,0,428,to_timestamp('04/10/2021 10:00','dd/mm/yyyy hh24:mi'),interval '150' minute );
+        INSERT INTO emisiones VALUES (4,1,6,0,16,to_timestamp('04/10/2021 12:30','dd/mm/yyyy hh24:mi'),interval '90' minute );
+        INSERT INTO emisiones VALUES (5,1,7,0,0,to_timestamp('04/10/2021 14:00','dd/mm/yyyy hh24:mi'),interval '20' minute );
+        INSERT INTO emisiones VALUES (6,1,6,0,16,to_timestamp('04/10/2021 14:20','dd/mm/yyyy hh24:mi'),interval '40' minute );
+        INSERT INTO emisiones VALUES (7,1,8,2021,277,to_timestamp('04/10/2021 15:00','dd/mm/yyyy hh24:mi'),interval '75' minute );
+        INSERT INTO emisiones VALUES (8,1,10,0,643,to_timestamp('04/10/2021 16:15','dd/mm/yyyy hh24:mi'),interval '15' minute );
+        INSERT INTO emisiones VALUES (9,1,11,1,169,to_timestamp('04/10/2021 16:30','dd/mm/yyyy hh24:mi'),interval '55' minute );
+        INSERT INTO emisiones VALUES (10,1,12,1,261,to_timestamp('04/10/2021 17:25','dd/mm/yyyy hh24:mi'),interval '60' minute );
+        INSERT INTO emisiones VALUES (11,1,13,0,359,to_timestamp('04/10/2021 18:25','dd/mm/yyyy hh24:mi'),interval '55' minute );
+        INSERT INTO emisiones VALUES (12,1,14,0,2,to_timestamp('04/10/2021 19:20','dd/mm/yyyy hh24:mi'),interval '70' minute );
+        INSERT INTO emisiones VALUES (13,1,15,0,234,to_timestamp('04/10/2021 20:30','dd/mm/yyyy hh24:mi'),interval '30' minute );
+        INSERT INTO emisiones VALUES (14,1,16,2021,277,to_timestamp('04/10/2021 21:00','dd/mm/yyyy hh24:mi'),interval '70' minute );
+        INSERT INTO emisiones VALUES (15,1,17,6,4,to_timestamp('04/10/2021 22:10','dd/mm/yyyy hh24:mi'),interval '205' minute );
+        INSERT INTO emisiones VALUES (16,1,18,0,727,to_timestamp('05/10/2021 01:35','dd/mm/yyyy hh24:mi'),interval '110' minute );
+        INSERT INTO emisiones VALUES (17,1,3,2021,278,to_timestamp('05/10/2021 03:25','dd/mm/yyyy hh24:mi'),interval '155' minute );
+        INSERT INTO emisiones VALUES (18,1,4,0,160,to_timestamp('05/10/2021 06:00','dd/mm/yyyy hh24:mi'),interval '150' minute );
+        INSERT INTO emisiones VALUES (19,1,5,0,367,to_timestamp('05/10/2021 08:30','dd/mm/yyyy hh24:mi'),interval '90' minute );
+        INSERT INTO emisiones VALUES (20,1,5,0,429,to_timestamp('05/10/2021 10:00','dd/mm/yyyy hh24:mi'),interval '150' minute );
+        INSERT INTO emisiones VALUES (21,1,6,0,17,to_timestamp('05/10/2021 12:30','dd/mm/yyyy hh24:mi'),interval '90' minute );
+        INSERT INTO emisiones VALUES (22,1,7,0,0,to_timestamp('05/10/2021 14:00','dd/mm/yyyy hh24:mi'),interval '20' minute );
+        INSERT INTO emisiones VALUES (23,1,6,0,17,to_timestamp('05/10/2021 14:20','dd/mm/yyyy hh24:mi'),interval '40' minute );
+        INSERT INTO emisiones VALUES (24,1,8,2021,278,to_timestamp('05/10/2021 15:00','dd/mm/yyyy hh24:mi'),interval '55' minute );
+        INSERT INTO emisiones VALUES (25,1,9,0,0,to_timestamp('05/10/2021 15:55','dd/mm/yyyy hh24:mi'),interval '20' minute );
+        INSERT INTO emisiones VALUES (26,1,10,0,644,to_timestamp('05/10/2021 16:15','dd/mm/yyyy hh24:mi'),interval '15' minute );
+        INSERT INTO emisiones VALUES (27,1,11,1,170,to_timestamp('05/10/2021 16:30','dd/mm/yyyy hh24:mi'),interval '55' minute );
+        INSERT INTO emisiones VALUES (28,1,12,1,262,to_timestamp('05/10/2021 17:25','dd/mm/yyyy hh24:mi'),interval '60' minute );
+        INSERT INTO emisiones VALUES (29,1,13,0,380,to_timestamp('05/10/2021 18:25','dd/mm/yyyy hh24:mi'),interval '55' minute );
+        INSERT INTO emisiones VALUES (30,1,14,0,3,to_timestamp('05/10/2021 19:20','dd/mm/yyyy hh24:mi'),interval '70' minute );
+        INSERT INTO emisiones VALUES (31,1,15,0,235,to_timestamp('05/10/2021 20:30','dd/mm/yyyy hh24:mi'),interval '30' minute );
+        INSERT INTO emisiones VALUES (32,1,16,2021,278,to_timestamp('05/10/2021 21:00','dd/mm/yyyy hh24:mi'),interval '70' minute );
+        INSERT INTO emisiones VALUES (33,1,19,0,96,to_timestamp('05/10/2021 22:10','dd/mm/yyyy hh24:mi'),interval '30' minute );
+        INSERT INTO emisiones VALUES (34,1,20,1,4,to_timestamp('05/10/2021 22:40','dd/mm/yyyy hh24:mi'),interval '60' minute );
+        INSERT INTO emisiones VALUES (35,1,21,0,146,to_timestamp('05/10/2021 23:40','dd/mm/yyyy hh24:mi'),interval '50' minute );
+        INSERT INTO emisiones VALUES (36,1,21,0,107,to_timestamp('06/10/2021 00:30','dd/mm/yyyy hh24:mi'),interval '60' minute );
+        INSERT INTO emisiones VALUES (37,1,21,0,69,to_timestamp('06/10/2021 01:30','dd/mm/yyyy hh24:mi'),interval '55' minute );
+        INSERT INTO emisiones VALUES (38,1,18,0,728,to_timestamp('06/10/2021 02:25','dd/mm/yyyy hh24:mi'),interval '110' minute );
+        INSERT INTO emisiones VALUES (39,1,3,2021,278,to_timestamp('06/10/2021 04:15','dd/mm/yyyy hh24:mi'),interval '105' minute );
+
+
+        -----------Canal 24 Horas
+        INSERT INTO emisiones VALUES (40,3,4,0,159,to_timestamp('04/10/2021 06:00','dd/mm/yyyy hh24:mi'),interval '150' minute );
+        INSERT INTO emisiones VALUES (41,3,5,0,366,to_timestamp('04/10/2021 08:30','dd/mm/yyyy hh24:mi'),interval '90' minute );
+        INSERT INTO emisiones VALUES (42,3,22,0,791,to_timestamp('04/10/2021 10:00','dd/mm/yyyy hh24:mi'),interval '300' minute );
+        INSERT INTO emisiones VALUES (43,3,8,2021,277,to_timestamp('04/10/2021 15:00','dd/mm/yyyy hh24:mi'),interval '60' minute );
+        INSERT INTO emisiones VALUES (44,3,23,0,459,to_timestamp('04/10/2021 16:00','dd/mm/yyyy hh24:mi'),interval '300' minute );
+        INSERT INTO emisiones VALUES (45,3,16,2021,277,to_timestamp('04/10/2021 21:00','dd/mm/yyyy hh24:mi'),interval '65' minute );
+        INSERT INTO emisiones VALUES (46,3,18,0,727,to_timestamp('04/10/2021 22:05','dd/mm/yyyy hh24:mi'),interval '115' minute );
+        INSERT INTO emisiones VALUES (47,3,3,2021,277,to_timestamp('05/10/2021 00:00','dd/mm/yyyy hh24:mi'),interval '30' minute );
+        INSERT INTO emisiones VALUES (48,3,24,0,25,to_timestamp('05/10/2021 00:30','dd/mm/yyyy hh24:mi'),interval '15' minute );
+        INSERT INTO emisiones VALUES (49,3,25,0,142,to_timestamp('05/10/2021 00:45','dd/mm/yyyy hh24:mi'),interval '15' minute );
+        INSERT INTO emisiones VALUES (50,3,25,0,142,to_timestamp('05/10/2021 00:45','dd/mm/yyyy hh24:mi'),interval '15' minute );
+        INSERT INTO emisiones VALUES (51,3,3,2021,277,to_timestamp('05/10/2021 01:00','dd/mm/yyyy hh24:mi'),interval '30' minute );
+        INSERT INTO emisiones VALUES (52,3,26,0,322,to_timestamp('05/10/2021 01:30','dd/mm/yyyy hh24:mi'),interval '30' minute );
+        INSERT INTO emisiones VALUES (53,3,27,0,643,to_timestamp('05/10/2021 02:00','dd/mm/yyyy hh24:mi'),interval '240' minute );
+        INSERT INTO emisiones VALUES (54,3,4,0,160,to_timestamp('05/10/2021 06:00','dd/mm/yyyy hh24:mi'),interval '150' minute );
+        INSERT INTO emisiones VALUES (55,3,5,0,366,to_timestamp('05/10/2021 08:30','dd/mm/yyyy hh24:mi'),interval '90' minute );
+        INSERT INTO emisiones VALUES (56,3,22,0,792,to_timestamp('05/10/2021 10:00','dd/mm/yyyy hh24:mi'),interval '120' minute );
+        INSERT INTO emisiones VALUES (57,3,33,0,0,to_timestamp('05/10/2021 13:00','dd/mm/yyyy hh24:mi'),interval '60' minute );
+        INSERT INTO emisiones VALUES (58,3,33,0,0,to_timestamp('05/10/2021 14:00','dd/mm/yyyy hh24:mi'),interval '60' minute );
+        INSERT INTO emisiones VALUES (59,3,22,0,792,to_timestamp('05/10/2021 14:00','dd/mm/yyyy hh24:mi'),interval '60' minute );
+        INSERT INTO emisiones VALUES (60,3,8,2021,278,to_timestamp('05/10/2021 15:00','dd/mm/yyyy hh24:mi'),interval '60' minute );
+        INSERT INTO emisiones VALUES (61,3,23,0,460,to_timestamp('05/10/2021 16:00','dd/mm/yyyy hh24:mi'),interval '300' minute );
+        INSERT INTO emisiones VALUES (62,3,16,2021,278,to_timestamp('05/10/2021 21:00','dd/mm/yyyy hh24:mi'),interval '65' minute );
+        INSERT INTO emisiones VALUES (63,3,18,0,728,to_timestamp('05/10/2021 22:05','dd/mm/yyyy hh24:mi'),interval '115' minute );
+        INSERT INTO emisiones VALUES (64,3,3,2021,278,to_timestamp('06/10/2021 00:00','dd/mm/yyyy hh24:mi'),interval '30' minute );
+        INSERT INTO emisiones VALUES (65,3,29,0,142,to_timestamp('06/10/2021 00:30','dd/mm/yyyy hh24:mi'),interval '30' minute );
+        INSERT INTO emisiones VALUES (66,3,3,2021,278,to_timestamp('06/10/2021 01:00','dd/mm/yyyy hh24:mi'),interval '30' minute );
+        INSERT INTO emisiones VALUES (67,3,30,0,343,to_timestamp('06/10/2021 01:30','dd/mm/yyyy hh24:mi'),interval '30' minute );
+        INSERT INTO emisiones VALUES (68,3,27,0,644,to_timestamp('06/10/2021 02:00','dd/mm/yyyy hh24:mi'),interval '240' minute );
+
+        ---------- Salvaguardar los datos
+        commit ;
+    </code>
+    <h2>Creación de vistas</h2>
+    <code>---------- Vistas
+
+        --[1]--
+        CREATE OR REPLACE VIEW VISTA_1 AS
+        SELECT to_char(fecha,'fmdd/mm/yyyy') fecha_emision,
+        to_char(fecha,'fmhh24:mi')||' - '|| to_char((fecha+duracion),'fmhh24:mi') horario,
+        ch.nombre,p.titulo,c.n_capitulo,c.titulo
+        from emisiones e
+        join capitulos c on e.id_prog = c.id_prog and e.n_temporada = c.n_temporada and e.n_capitulo = c.n_capitulo
+        join programas p on c.id_prog = p.id_prog
+        join canales ch using (id_canal)
+        order by ch.nombre,fecha;
+
+        --[2]--
+        CREATE OR REPLACE VIEW VISTA_2 AS
+        SELECT to_char(fecha,'fmdd/mm/yyyy') fecha_emision,
+        to_char(fecha,'fmhh24:mi')||' - '|| to_char((fecha+duracion),'fmhh24:mi') horario,
+        ch.nombre,p.titulo,c.n_capitulo,c.titulo
+        from emisiones e
+        join capitulos c on e.id_prog = c.id_prog and e.n_temporada = c.n_temporada and e.n_capitulo = c.n_capitulo
+        join programas p on c.id_prog = p.id_prog
+        join canales ch using (id_canal)
+        where to_char(fecha,'dd/mm/yyyy') = '05/10/2021' and ch.nombre = 'La 1'
+        order by ch.nombre,fecha;
+
+
+        --[3]--
+        CREATE OR REPLACE VIEW VISTA_3 AS
+        SELECT to_char(fecha,'fmdd/mm/yyyy') fecha_emision,
+        to_char(fecha,'fmhh24:mi')||' - '|| to_char((fecha+duracion),'fmhh24:mi') horario,
+        ch.nombre,p.titulo,c.n_capitulo,c.titulo
+        from emisiones e
+        join capitulos c on e.id_prog = c.id_prog and e.n_temporada = c.n_temporada and e.n_capitulo = c.n_capitulo
+        join programas p on c.id_prog = p.id_prog
+        join canales ch using (id_canal)
+        where p.titulo = 'Dos Vidas'
+        order by ch.nombre,fecha;
+
+
+        --[4]--
+        CREATE OR REPLACE VIEW VISTA_4 AS
+        SELECT fecha_emision,nombre,count(*)||' programas' cantidad_programas
+        from(
+        SELECT to_char(fecha,'fmDay dd/mm/yyyy') fecha_emision,
+        ch.nombre,count(*)
+        from emisiones e
+        join capitulos c on e.id_prog = c.id_prog and e.n_temporada = c.n_temporada and e.n_capitulo = c.n_capitulo
+        join programas p on c.id_prog = p.id_prog
+        join canales ch using (id_canal)
+        group by fecha,nombre
+        order by 1,2)
+        group by fecha_emision, nombre
+        order by 1,2;
+
+
+        --[5]--
+        CREATE OR REPLACE VIEW VISTA_5 AS
+        SELECT p.titulo,c.n_capitulo,c.titulo,c.descripcion
+        from programas p
+        join capitulos c on p.id_prog=c.id_prog
+        where c.descripcion is not null;
+
+
+        --[6]--
+        CREATE OR REPLACE VIEW VISTA_6 AS
+        SELECT to_char(fecha,'fmdd/mm/yyyy') fecha_emision,
+        to_char(fecha,'fmhh24:mi')||' - '|| to_char((fecha+duracion),'fmhh24:mi') horario,
+        ch.nombre,p.titulo,c.n_capitulo,c.titulo
+        from emisiones e
+        join capitulos c on e.id_prog = c.id_prog and e.n_temporada = c.n_temporada and e.n_capitulo = c.n_capitulo
+        join programas p on c.id_prog = p.id_prog
+        join canales ch using (id_canal)
+        where fecha<to_date('05/10/2021 11:05','dd/mm/yyyy hh24:mi') and (fecha+duracion)>to_date('05/10/2021 11:05','dd/mm/yyyy hh24:mi')
+        order by ch.nombre,fecha;</code>
+
+</main>
+</body>
+</html>
