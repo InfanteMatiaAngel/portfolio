@@ -207,6 +207,9 @@ a{
         width: 100%;
         display: block;
     }
+    #diseno{
+        width: 100%;
+    }
 }
 @media  (max-width: 480px){
     #subIAW{
