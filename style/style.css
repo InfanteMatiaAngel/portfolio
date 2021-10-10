@@ -122,6 +122,10 @@ article{
 p{
     text-align: justify;
 }
+a{
+    color: white;
+    font-weight: bold;
+}
 #sobreMi>p{
     position: relative;
     display: inline-block;
